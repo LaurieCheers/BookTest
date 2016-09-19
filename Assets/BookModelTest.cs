@@ -287,8 +287,8 @@ public class BookModelTest : MonoBehaviour
         };
         page2Mesh.uv = new Vector2[]
         {
-            new Vector3(0,0), new Vector3(0,1),
-            new Vector3(1,0), new Vector3(1,1),
+            new Vector3(0,0), new Vector3(1,0),
+            new Vector3(0,1), new Vector3(1,1),
         };
         page2Mesh.triangles = new int[]
         {
@@ -307,7 +307,7 @@ public class BookModelTest : MonoBehaviour
     // Update is called once per frame
     void Update ()
     {
-        Vector3 pageTarget = new Vector3(0, Input.mousePosition.y*0.004f, (Input.mousePosition.x-400)*-0.004f);
+        Vector3 pageTarget = new Vector3(0, Input.mousePosition.y*0.008f, (Input.mousePosition.x-300)*-0.008f);
         Vector3 pageTargetOffset = pageTarget - pageSim[pageSim.Length - 1].pos;
         float forceMultiplierStep = 1.0f / ((pageSim.Length - 1) * (pageSim.Length-1));
         for(int Idx = 0; Idx < pageSim.Length; ++Idx)
