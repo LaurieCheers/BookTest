@@ -186,51 +186,60 @@ public class BookModelTest : MonoBehaviour
             pageSim[Idx].AddConnection(pageSim[Idx-1]);
         }
 
-        Mesh mesh = new Mesh();
-        mesh.vertices = new Vector3[8]
+        Mesh edgeMesh = new Mesh();
+        edgeMesh.vertices = new Vector3[]
         {
             new Vector3(padSize.x,0,padSize.z), new Vector3(padSize.x,padSize.y,padSize.z),
             new Vector3(0,0,padSize.z), new Vector3(0,padSize.y,padSize.z),
             new Vector3(0,0,0), new Vector3(0,padSize.y,0),
             new Vector3(padSize.x,0,0), new Vector3(padSize.x,padSize.y,0),
         };
-        mesh.uv = new Vector2[8]
+        edgeMesh.uv = new Vector2[]
         {
             new Vector3(0,0), new Vector3(0,1),
             new Vector3(0.3f,0), new Vector3(0.3f,1),
             new Vector3(0.7f,0), new Vector3(0.7f,1),
             new Vector3(1,0), new Vector3(1,1),
         };
-        mesh.triangles = new int[]
+        edgeMesh.normals = new Vector3[]
+        {
+            new Vector3(1,0,-1).normalized, new Vector3(1,0,-1).normalized,
+            new Vector3(-1,0,-1).normalized, new Vector3(-1,0,-1).normalized,
+            new Vector3(-1,0,1).normalized, new Vector3(-1,0,1).normalized,
+            new Vector3(1,0,1).normalized, new Vector3(1,0,1).normalized,
+        };
+        edgeMesh.triangles = new int[]
         {
             0,3,1, 0,2,3,
             2,5,3, 2,4,5,
             4,7,5, 4,6,7,
             6,1,7, 6,0,1,
         };
-        GetComponent<MeshFilter>().mesh = mesh;
+        GetComponent<MeshFilter>().mesh = edgeMesh;
         GetComponent<MeshRenderer>().materials = new Material[] { edgeTexture };
 
         Vector2 pageTip = new Vector2(1, padSize.z);
 
-        Vector3[] page1Vertices = new Vector3[pageSim.Length * 2];
-        Vector2[] page1UVs = new Vector2[pageSim.Length * 2];
-        Vector3[] page1BackVertices = new Vector3[pageSim.Length * 2];
-        Vector2[] page1BackUVs = new Vector2[pageSim.Length * 2];
+        Vector3[] pageVertices = new Vector3[pageSim.Length * 2];
+        Vector3[] page1Normals = new Vector3[pageSim.Length * 2];
+        Vector2[] pageUVs = new Vector2[pageSim.Length * 2];
 
-        DisplayPageSim(page1Vertices);
-        DisplayPageSim(page1BackVertices);
+        DisplayPageSim(pageVertices, page1Normals);
         float uvScale = 1.0f / (pageSim.Length-1);
         for (int Idx = 0; Idx < pageSim.Length; ++Idx)
         {
-            page1UVs[Idx * 2 + 0] = new Vector2(0, 1-Idx*uvScale);
-            page1UVs[Idx * 2 + 1] = new Vector2(1, 1-Idx*uvScale);
-            page1BackUVs[Idx * 2 + 0] = new Vector2(0, 1-Idx * uvScale);
-            page1BackUVs[Idx * 2 + 1] = new Vector2(1, 1-Idx * uvScale);
+            pageUVs[Idx * 2 + 0] = new Vector2(0, 1 - Idx * uvScale);
+            pageUVs[Idx * 2 + 1] = new Vector2(1, 1 - Idx * uvScale);
+        }
+
+        Vector3[] page1BackNormals = new Vector3[pageSim.Length * 2];
+        for (int Idx = 0; Idx < page1Normals.Length; ++Idx)
+        {
+            page1BackNormals[Idx] = -page1Normals[Idx];
         };
 
-        int[] page1Triangles = new int[6 * (pageSim.Length - 1) ];
-        int[] page1BackTriangles = new int[6 * (pageSim.Length - 1)];
+        int[] page1Triangles = new int[6 * (pageSim.Length - 1)];
+        int[] page2Triangles = new int[6 * (pageSim.Length - 1)];
         int vertexIdx = 0;
         int triangleIdx = 0;
         while (triangleIdx < page1Triangles.Length)
@@ -243,13 +252,13 @@ public class BookModelTest : MonoBehaviour
             page1Triangles[triangleIdx+4] = vertexIdx + 3;
             page1Triangles[triangleIdx+5] = vertexIdx + 2;
 
-            page1BackTriangles[triangleIdx + 0] = vertexIdx + 0;
-            page1BackTriangles[triangleIdx + 1] = vertexIdx + 3;
-            page1BackTriangles[triangleIdx + 2] = vertexIdx + 1;
+            page2Triangles[triangleIdx + 0] = vertexIdx + 0;
+            page2Triangles[triangleIdx + 1] = vertexIdx + 3;
+            page2Triangles[triangleIdx + 2] = vertexIdx + 1;
 
-            page1BackTriangles[triangleIdx + 3] = vertexIdx + 0;
-            page1BackTriangles[triangleIdx + 4] = vertexIdx + 2;
-            page1BackTriangles[triangleIdx + 5] = vertexIdx + 3;
+            page2Triangles[triangleIdx + 3] = vertexIdx + 0;
+            page2Triangles[triangleIdx + 4] = vertexIdx + 2;
+            page2Triangles[triangleIdx + 5] = vertexIdx + 3;
 
             vertexIdx += 2;
             triangleIdx += 6;
@@ -259,9 +268,10 @@ public class BookModelTest : MonoBehaviour
         page1.transform.parent = transform;
         page1.transform.localPosition = new Vector3(0, 0, 0);
         Mesh page1Mesh = new Mesh();
-        page1Mesh.vertices = page1Vertices;
-        page1Mesh.uv = page1UVs;
+        page1Mesh.vertices = pageVertices;
+        page1Mesh.uv = pageUVs;
         page1Mesh.triangles = page1Triangles;
+        page1Mesh.normals = page1Normals;
         page1.AddComponent<MeshFilter>();
         page1.GetComponent<MeshFilter>().mesh = page1Mesh;
         page1.AddComponent<MeshRenderer>();
@@ -271,9 +281,10 @@ public class BookModelTest : MonoBehaviour
         page1Back.transform.parent = transform;
         page1Back.transform.localPosition = new Vector3(0, 0, 0);
         Mesh page1BackMesh = new Mesh();
-        page1BackMesh.vertices = page1BackVertices;
-        page1BackMesh.uv = page1BackUVs;
-        page1BackMesh.triangles = page1BackTriangles;
+        page1BackMesh.vertices = pageVertices;
+        page1BackMesh.uv = pageUVs;
+        page1BackMesh.triangles = page2Triangles;
+        page1BackMesh.normals = page1BackNormals;
         page1Back.AddComponent<MeshFilter>();
         page1Back.GetComponent<MeshFilter>().mesh = page1BackMesh;
         page1Back.AddComponent<MeshRenderer>();
@@ -293,6 +304,11 @@ public class BookModelTest : MonoBehaviour
         page2Mesh.triangles = new int[]
         {
             0,1,3, 0,3,2,
+        };
+        page2Mesh.normals = new Vector3[]
+        {
+            new Vector3(0,1,0), new Vector3(0,1,0),
+            new Vector3(0,1,0), new Vector3(0,1,0),
         };
 
         page2 = new GameObject();
@@ -320,11 +336,21 @@ public class BookModelTest : MonoBehaviour
 
         Mesh mesh1 = page1.GetComponent<MeshFilter>().mesh;
         Vector3[] vertices1 = mesh1.vertices;
-        DisplayPageSim(vertices1);
+        Vector3[] normals1 = mesh1.normals;
+        DisplayPageSim(vertices1, normals1);
+
         mesh1.vertices = vertices1;
+        mesh1.normals = normals1;
 
         Mesh mesh2 = page1Back.GetComponent<MeshFilter>().mesh;
+        Vector3[] normals2 = mesh2.normals;
+        for (int Idx = 0; Idx < normals1.Length; ++Idx)
+        {
+            normals2[Idx] = -normals1[Idx];
+        }
+
         mesh2.vertices = vertices1;
+        mesh2.normals = normals2;
     }
 
     void RunPageSim()
@@ -339,12 +365,30 @@ public class BookModelTest : MonoBehaviour
         }
     }
 
-    void DisplayPageSim(Vector3[] vertices)
+    void DisplayPageSim(Vector3[] vertices, Vector3[] normals)
     {
         for (int Idx = 0; Idx < pageSim.Length; ++Idx)
         {
             vertices[Idx * 2 + 0] = pageSim[Idx].modelPos;
             vertices[Idx * 2 + 1] = pageSim[Idx].modelPos + new Vector3(1,0,0);
+
+            Vector3 delta;
+            if (Idx == 0)
+            {
+                delta = pageSim[Idx].modelPos - pageSim[Idx + 1].modelPos;
+            }
+            else if (Idx == pageSim.Length - 1)
+            {
+                delta = pageSim[Idx - 1].modelPos - pageSim[Idx].modelPos;
+            }
+            else
+            {
+                delta = pageSim[Idx - 1].modelPos - pageSim[Idx + 1].modelPos;
+            }
+            Vector3 normal = new Vector3(0, delta.z, -delta.y);
+            normal.Normalize();
+            normals[Idx * 2 + 0] = normal;
+            normals[Idx * 2 + 1] = normal;
         }
     }
 }
