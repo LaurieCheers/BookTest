@@ -167,54 +167,167 @@ public class BookModelTest : MonoBehaviour
 
         pageSim = new PageSimNode[numPageNodes];
         pageSim[0] = new PageSimNode(new Vector3(0, padSize.y + epsilon, 0), padSize.y + epsilon, true);
-        pageSim[numPageNodes-1] = new PageSimNode(new Vector3(0, padSize.y + epsilon, 1), padSize.y + epsilon, true);
 
+        for (int Idx = 1; Idx < pageSim.Length; ++Idx)
         {
-            int Idx = 1;
-            int midpoint = pageSim.Length / 2;
-            for (; Idx < pageSim.Length/2; ++Idx)
-            {
-                pageSim[Idx] = new PageSimNode(new Vector3(0, padSize.y + epsilon, Idx * pageNodeSpacing), padSize.y + epsilon, false);
-            };
-            for (; Idx < pageSim.Length; ++Idx)
-            {
-                pageSim[Idx] = new PageSimNode(new Vector3(0, padSize.y + epsilon + (midpoint-Idx)*pageNodeSpacing, midpoint * pageNodeSpacing), padSize.y + epsilon, false);
-            };
-        }
-        for(int Idx = 1; Idx < pageSim.Length; ++Idx)
-        {
-            pageSim[Idx].AddConnection(pageSim[Idx-1]);
-        }
+            pageSim[Idx] = new PageSimNode(new Vector3(0, padSize.y + epsilon, Idx * pageNodeSpacing), padSize.y + epsilon, false);
+            pageSim[Idx].AddConnection(pageSim[Idx - 1]);
+        };
 
         Mesh edgeMesh = new Mesh();
-        edgeMesh.vertices = new Vector3[]
-        {
-            new Vector3(padSize.x,0,padSize.z), new Vector3(padSize.x,padSize.y,padSize.z),
-            new Vector3(0,0,padSize.z), new Vector3(0,padSize.y,padSize.z),
-            new Vector3(0,0,0), new Vector3(0,padSize.y,0),
-            new Vector3(padSize.x,0,0), new Vector3(padSize.x,padSize.y,0),
+        Mesh page2Mesh = new Mesh();
+
+        Vector3[] pageSpine = new Vector3[] {
+            new Vector3(0,0,0),
+            new Vector3(0,0.05f,0.25f*padSize.z),
+            new Vector3(0,0.06f,0.5f*padSize.z),
+            new Vector3(0,0.02f,0.75f*padSize.z),
+            new Vector3(0,0,padSize.z)
         };
-        edgeMesh.uv = new Vector2[]
+        int numEdgeVertices = pageSpine.Length * 4 + 4;
+        Vector3[] edgeMeshVertices = new Vector3[numEdgeVertices];
+        Vector3[] edgeMeshNormals = new Vector3[numEdgeVertices];
+        Vector2[] edgeMeshUVs = new Vector2[numEdgeVertices];
+        int numEdgeTriangleIndices = (pageSpine.Length - 1) * 12 + 6;
+        int[] edgeMeshTriangles = new int[numEdgeTriangleIndices];
+        int edgeMeshTriangleIdx = 0;
+        Vector3 edgeVertical = new Vector3(0, padSize.y, 0);
+        Vector3 edgeHorizontal = new Vector3(padSize.x, 0, 0);
+        float edgeUVStep = 1.0f / (pageSpine.Length-1);
+
+        int numPage2Vertices = pageSpine.Length * 2;
+        Vector3[] page2MeshVertices = new Vector3[numPage2Vertices];
+        Vector3[] page2MeshNormals = new Vector3[numPage2Vertices];
+        Vector2[] page2MeshUVs = new Vector2[numPage2Vertices];
+        int numPage2TriangleIndices = (pageSpine.Length - 1) * 6;
+        int[] page2MeshTriangles = new int[numPage2TriangleIndices];
+        int page2MeshTriangleIdx = 0;
+
+        for (int Idx = 0; Idx < pageSpine.Length; ++Idx)
         {
-            new Vector3(0,0), new Vector3(0,1),
-            new Vector3(0.3f,0), new Vector3(0.3f,1),
-            new Vector3(0.7f,0), new Vector3(0.7f,1),
-            new Vector3(1,0), new Vector3(1,1),
-        };
-        edgeMesh.normals = new Vector3[]
-        {
-            new Vector3(1,0,-1).normalized, new Vector3(1,0,-1).normalized,
-            new Vector3(-1,0,-1).normalized, new Vector3(-1,0,-1).normalized,
-            new Vector3(-1,0,1).normalized, new Vector3(-1,0,1).normalized,
-            new Vector3(1,0,1).normalized, new Vector3(1,0,1).normalized,
-        };
-        edgeMesh.triangles = new int[]
-        {
-            0,3,1, 0,2,3,
-            2,5,3, 2,4,5,
-            4,7,5, 4,6,7,
-            6,1,7, 6,0,1,
-        };
+            edgeMeshVertices[Idx * 4 + 0] = pageSpine[Idx];
+            edgeMeshVertices[Idx * 4 + 1] = pageSpine[Idx] + edgeVertical;
+            edgeMeshVertices[Idx * 4 + 2] = pageSpine[Idx] + edgeHorizontal;
+            edgeMeshVertices[Idx * 4 + 3] = pageSpine[Idx] + edgeVertical + edgeHorizontal;
+            edgeMeshNormals[Idx * 4 + 0] = new Vector3(-1, 0, 0);
+            edgeMeshNormals[Idx * 4 + 1] = new Vector3(-1, 0, 0);
+            edgeMeshNormals[Idx * 4 + 2] = new Vector3(1, 0, 0);
+            edgeMeshNormals[Idx * 4 + 3] = new Vector3(1, 0, 0);
+            edgeMeshUVs[Idx * 4 + 0] = new Vector2(Idx * edgeUVStep, 1);
+            edgeMeshUVs[Idx * 4 + 1] = new Vector2(Idx * edgeUVStep, 0);
+            edgeMeshUVs[Idx * 4 + 2] = new Vector2(Idx * edgeUVStep, 1);
+            edgeMeshUVs[Idx * 4 + 3] = new Vector2(Idx * edgeUVStep, 0);
+
+            page2MeshVertices[Idx * 2 + 0] = pageSpine[Idx] + edgeVertical;
+            page2MeshVertices[Idx * 2 + 1] = pageSpine[Idx] + edgeVertical + edgeHorizontal;
+            page2MeshUVs[Idx * 2 + 0] = new Vector2(0, Idx * edgeUVStep);
+            page2MeshUVs[Idx * 2 + 1] = new Vector2(1, Idx * edgeUVStep);
+
+            Vector3 pageDelta;
+            if(Idx == 0)
+            {
+                pageDelta = pageSpine[1] - pageSpine[0];
+            }
+            else if(Idx == pageSpine.Length-1)
+            {
+                pageDelta = pageSpine[Idx] - pageSpine[Idx-1];
+            }
+            else
+            {
+                pageDelta = pageSpine[Idx+1] - pageSpine[Idx-1];
+            }
+            pageDelta.Normalize();
+            page2MeshNormals[Idx * 2 + 0] = new Vector3(0, -pageDelta.z, pageDelta.y);
+            page2MeshNormals[Idx * 2 + 1] = new Vector3(0, -pageDelta.z, pageDelta.y);
+
+            if (Idx > 0)
+            {
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 - 4;
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 - 3;
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 + 0;
+
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 - 3;
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 + 1;
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 + 0;
+
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 - 2;
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 + 2;
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 - 1;
+
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 - 1;
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 + 2;
+                edgeMeshTriangles[edgeMeshTriangleIdx++] = Idx * 4 + 3;
+
+                page2MeshTriangles[page2MeshTriangleIdx++] = Idx * 2;
+                page2MeshTriangles[page2MeshTriangleIdx++] = Idx * 2 - 1;
+                page2MeshTriangles[page2MeshTriangleIdx++] = Idx * 2 + 1;
+
+                page2MeshTriangles[page2MeshTriangleIdx++] = Idx * 2;
+                page2MeshTriangles[page2MeshTriangleIdx++] = Idx * 2 - 2;
+                page2MeshTriangles[page2MeshTriangleIdx++] = Idx * 2 - 1;
+            }
+        }
+
+        int finalFace = pageSpine.Length * 4;
+        edgeMeshVertices[finalFace + 0] = pageSpine[pageSpine.Length - 1];
+        edgeMeshVertices[finalFace + 1] = pageSpine[pageSpine.Length - 1] + edgeVertical;
+        edgeMeshVertices[finalFace + 2] = pageSpine[pageSpine.Length - 1] + edgeHorizontal;
+        edgeMeshVertices[finalFace + 3] = pageSpine[pageSpine.Length - 1] + edgeVertical + edgeHorizontal;
+        edgeMeshNormals[finalFace + 0] = new Vector3(0, 0, -1);
+        edgeMeshNormals[finalFace + 1] = new Vector3(0, 0, -1);
+        edgeMeshNormals[finalFace + 2] = new Vector3(0, 0, -1);
+        edgeMeshNormals[finalFace + 3] = new Vector3(0, 0, -1);
+        edgeMeshUVs[finalFace + 0] = new Vector2(0, 1);
+        edgeMeshUVs[finalFace + 1] = new Vector2(0, 0);
+        edgeMeshUVs[finalFace + 2] = new Vector2(1, 1);
+        edgeMeshUVs[finalFace + 3] = new Vector2(1, 0);
+
+        edgeMeshTriangles[edgeMeshTriangleIdx++] = finalFace + 0;
+        edgeMeshTriangles[edgeMeshTriangleIdx++] = finalFace + 1;
+        edgeMeshTriangles[edgeMeshTriangleIdx++] = finalFace + 2;
+
+        edgeMeshTriangles[edgeMeshTriangleIdx++] = finalFace + 1;
+        edgeMeshTriangles[edgeMeshTriangleIdx++] = finalFace + 3;
+        edgeMeshTriangles[edgeMeshTriangleIdx++] = finalFace + 2;
+
+        edgeMesh.vertices = edgeMeshVertices;
+        edgeMesh.uv = edgeMeshUVs;
+        edgeMesh.normals = edgeMeshNormals;
+        edgeMesh.triangles = edgeMeshTriangles;
+
+        page2Mesh.vertices = page2MeshVertices;
+        page2Mesh.uv = page2MeshUVs;
+        page2Mesh.normals = page2MeshNormals;
+        page2Mesh.triangles = page2MeshTriangles;
+
+        /*        edgeMesh.vertices = new Vector3[]
+                {
+                    new Vector3(padSize.x,0,padSize.z), new Vector3(padSize.x,padSize.y,padSize.z),
+                    new Vector3(0,0,padSize.z), new Vector3(0,padSize.y,padSize.z),
+                    new Vector3(0,0,0), new Vector3(0,padSize.y,0),
+                    new Vector3(padSize.x,0,0), new Vector3(padSize.x,padSize.y,0),
+                };
+                edgeMesh.uv = new Vector2[]
+                {
+                    new Vector3(0,0), new Vector3(0,1),
+                    new Vector3(0.3f,0), new Vector3(0.3f,1),
+                    new Vector3(0.7f,0), new Vector3(0.7f,1),
+                    new Vector3(1,0), new Vector3(1,1),
+                };
+                edgeMesh.normals = new Vector3[]
+                {
+                    new Vector3(1,0,-1).normalized, new Vector3(1,0,-1).normalized,
+                    new Vector3(-1,0,-1).normalized, new Vector3(-1,0,-1).normalized,
+                    new Vector3(-1,0,1).normalized, new Vector3(-1,0,1).normalized,
+                    new Vector3(1,0,1).normalized, new Vector3(1,0,1).normalized,
+                };
+                edgeMesh.triangles = new int[]
+                {
+                    0,3,1, 0,2,3,
+                    2,5,3, 2,4,5,
+                    4,7,5, 4,6,7,
+                    6,1,7, 6,0,1,
+                };*/
         GetComponent<MeshFilter>().mesh = edgeMesh;
         GetComponent<MeshRenderer>().materials = new Material[] { edgeTexture };
 
@@ -239,7 +352,7 @@ public class BookModelTest : MonoBehaviour
         };
 
         int[] page1Triangles = new int[6 * (pageSim.Length - 1)];
-        int[] page2Triangles = new int[6 * (pageSim.Length - 1)];
+        int[] page1BackTriangles = new int[6 * (pageSim.Length - 1)];
         int vertexIdx = 0;
         int triangleIdx = 0;
         while (triangleIdx < page1Triangles.Length)
@@ -252,13 +365,13 @@ public class BookModelTest : MonoBehaviour
             page1Triangles[triangleIdx+4] = vertexIdx + 3;
             page1Triangles[triangleIdx+5] = vertexIdx + 2;
 
-            page2Triangles[triangleIdx + 0] = vertexIdx + 0;
-            page2Triangles[triangleIdx + 1] = vertexIdx + 3;
-            page2Triangles[triangleIdx + 2] = vertexIdx + 1;
+            page1BackTriangles[triangleIdx + 0] = vertexIdx + 0;
+            page1BackTriangles[triangleIdx + 1] = vertexIdx + 3;
+            page1BackTriangles[triangleIdx + 2] = vertexIdx + 1;
 
-            page2Triangles[triangleIdx + 3] = vertexIdx + 0;
-            page2Triangles[triangleIdx + 4] = vertexIdx + 2;
-            page2Triangles[triangleIdx + 5] = vertexIdx + 3;
+            page1BackTriangles[triangleIdx + 3] = vertexIdx + 0;
+            page1BackTriangles[triangleIdx + 4] = vertexIdx + 2;
+            page1BackTriangles[triangleIdx + 5] = vertexIdx + 3;
 
             vertexIdx += 2;
             triangleIdx += 6;
@@ -283,33 +396,33 @@ public class BookModelTest : MonoBehaviour
         Mesh page1BackMesh = new Mesh();
         page1BackMesh.vertices = pageVertices;
         page1BackMesh.uv = pageUVs;
-        page1BackMesh.triangles = page2Triangles;
+        page1BackMesh.triangles = page1BackTriangles;
         page1BackMesh.normals = page1BackNormals;
         page1Back.AddComponent<MeshFilter>();
         page1Back.GetComponent<MeshFilter>().mesh = page1BackMesh;
         page1Back.AddComponent<MeshRenderer>();
         page1Back.GetComponent<MeshRenderer>().material = page1BackTexture;
 
-        Mesh page2Mesh = new Mesh();
-        page2Mesh.vertices = new Vector3[]
-        {
-            new Vector3(0,padSize.y,0), new Vector3(padSize.x,padSize.y,0),
-            new Vector3(0,padSize.y,padSize.z), new Vector3(padSize.x,padSize.y,padSize.z),
-        };
-        page2Mesh.uv = new Vector2[]
-        {
-            new Vector3(0,0), new Vector3(1,0),
-            new Vector3(0,1), new Vector3(1,1),
-        };
-        page2Mesh.triangles = new int[]
-        {
-            0,1,3, 0,3,2,
-        };
-        page2Mesh.normals = new Vector3[]
-        {
-            new Vector3(0,1,0), new Vector3(0,1,0),
-            new Vector3(0,1,0), new Vector3(0,1,0),
-        };
+        /*        Mesh page2Mesh = new Mesh();
+                page2Mesh.vertices = new Vector3[]
+                {
+                    new Vector3(0,padSize.y,0), new Vector3(padSize.x,padSize.y,0),
+                    new Vector3(0,padSize.y,padSize.z), new Vector3(padSize.x,padSize.y,padSize.z),
+                };
+                page2Mesh.uv = new Vector2[]
+                {
+                    new Vector3(0,0), new Vector3(1,0),
+                    new Vector3(0,1), new Vector3(1,1),
+                };
+                page2Mesh.triangles = new int[]
+                {
+                    0,1,3, 0,3,2,
+                };
+                page2Mesh.normals = new Vector3[]
+                {
+                    new Vector3(0,1,0), new Vector3(0,1,0),
+                    new Vector3(0,1,0), new Vector3(0,1,0),
+                };*/
 
         page2 = new GameObject();
         page2.transform.parent = transform;
